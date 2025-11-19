@@ -37,7 +37,9 @@ const char CONFIG_PAGE[] PROGMEM = R"rawliteral(
                 <label for="name">Device Name</label>
                 <input type="text" id="name" name="name" placeholder="e.g., Living Room Sensor" required>
                 <label for="type">Device Type</label>
-                <input type="text" id="type" name="type" value="Temp/Humidity" required>
+                <select id="type" name="type">
+                    <option value="Temp/Humidity">Temp/Humidity</option>
+                </select>
                 <label for="location">Location Hint</label>
                 <input type="text" id="location" name="location" placeholder="e.g., On the bookshelf">
             </div>
