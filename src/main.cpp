@@ -1,66 +1,77 @@
 #include <Arduino.h>
 #include "ConfigManager.h"
+#include "PortalManager.h"
+#include "ButtonHandler.h"
+
+#define BUTTON_PIN 10
 
 ConfigManager configManager;
+ButtonHandler buttonHandler(BUTTON_PIN);
 
-void printConfig(const DeviceConfig& config);
+void checkForFactoryReset();
 
 void setup() {
   Serial.begin(115200);
-  delay(5000); // Wait for Serial to initialize
+  while (!Serial) { delay(10); }
+  Serial.println("\n\n--- Booting IoT Node ---");
 
-  Serial.println("\n\n--- ConfigManager Test ---");
-
+  // Initialize handlers
   configManager.begin();
+  buttonHandler.begin();
+  
+  // Load the configuration from NVS
   configManager.loadConfig();
 
-  if (configManager.isConfigured()) {
-    // --- SECOND RUN ---
-    Serial.println("Configuration found in NVS. Loading and printing:");
-    const DeviceConfig& config = configManager.getConfig();
-    printConfig(config);
-
-    Serial.println("\nClearing configuration for the next test run.");
-    configManager.clearConfig();
-    Serial.println("Configuration cleared.");
-
-  } else {
-    // --- FIRST RUN ---
-    Serial.println("No configuration found. Creating and saving a dummy config.");
-    DeviceConfig& config = configManager.getMutableConfig();
-
-    // Populate the struct with dummy data
-    strcpy(config.wifiSSID, "MyHomeWiFi");
-    strcpy(config.wifiPassword, "SecretPassword123");
-    strcpy(config.serverUrl, "http://192.168.1.100:3000/api");
-    strcpy(config.deviceName, "Living Room Sensor");
-    strcpy(config.deviceType, "Temp/Humidity");
-    strcpy(config.locationHint, "On the bookshelf");
-    config.sleepIntervalSeconds = 600;
-    config.configured = true; // Mark as configured
-
-    configManager.saveConfig();
-    Serial.println("Dummy configuration saved to NVS.");
-    Serial.println("Please reset the device to test loading.");
+  // Before doing anything else, check if the user is holding the button
+  // to force a factory reset. We'll check for 3 seconds.
+  Serial.println("Checking for factory reset command (hold button)...");
+  unsigned long startTime = millis();
+  while (millis() - startTime < 3000) {
+    checkForFactoryReset();
   }
 
-  Serial.println("--- End of Test ---");
+  if (!configManager.isConfigured()) {
+    // --- SETUP MODE ---
+    Serial.println("Device is not configured. Starting setup portal.");
+    PortalManager portalManager(configManager);
+    portalManager.start();
+
+    while (!portalManager.isConfigSaved()) {
+      portalManager.loop();
+    }
+
+    portalManager.stop();
+    Serial.println("Configuration saved. Restarting device in 5 seconds...");
+    delay(5000);
+    ESP.restart();
+
+  } else {
+    // --- NORMAL OPERATION ---
+    Serial.println("Device is configured. Proceeding with normal operation.");
+    const DeviceConfig& config = configManager.getConfig();
+    Serial.print("Device Name: ");
+    Serial.println(config.deviceName);
+  }
 }
 
 void loop() {
-  // Nothing to do here for this test.
+  // The main loop should always check for a factory reset.
+  checkForFactoryReset();
+
+  Serial.println("Main loop running...");
+  delay(5000);
 }
 
-void printConfig(const DeviceConfig& config) {
-  Serial.println("---------------------------------");
-  Serial.print("WiFi SSID: "); Serial.println(config.wifiSSID);
-  Serial.print("WiFi Password: "); Serial.println(config.wifiPassword);
-  Serial.print("Server URL: "); Serial.println(config.serverUrl);
-  Serial.print("Device ID: "); Serial.println(config.deviceId);
-  Serial.print("Device Name: "); Serial.println(config.deviceName);
-  Serial.print("Device Type: "); Serial.println(config.deviceType);
-  Serial.print("Location Hint: "); Serial.println(config.locationHint);
-  Serial.print("Sleep Interval: "); Serial.print(config.sleepIntervalSeconds); Serial.println("s");
-  Serial.print("Is Configured: "); Serial.println(config.configured ? "true" : "false");
-  Serial.println("---------------------------------");
+/**
+ * @brief Checks the button for a long press event and triggers a factory reset.
+ */
+void checkForFactoryReset() {
+  buttonHandler.tick();
+  if (buttonHandler.getEvent() == EV_LONG_PRESS) {
+    Serial.println("\n!!! FACTORY RESET TRIGGERED !!!");
+    Serial.println("Clearing configuration and restarting in 3 seconds...");
+    configManager.clearConfig();
+    delay(3000);
+    ESP.restart();
+  }
 }
