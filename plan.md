@@ -24,7 +24,7 @@ This document outlines the development plan for the ESP32-based IoT Node. The pr
     *   Add the `mathertel/OneButton` library to handle debouncing, multi-press, and long-press events.
     *   Write a test sketch to detect and print single, double, triple, and long-press events to the Serial monitor.
 
-5.  **Power Management Test:**
+5.  **Power Management Test:** (DONE)
     *   Write a sketch to control two GPIO pins connected to LEDs (as stand-ins for the transistors).
     *   Verify that you can turn the "peripherals" on and off programmatically.
 
