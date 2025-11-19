@@ -27,7 +27,9 @@ enum ButtonEvent {
  * 2. In the main `setup()` function, call the begin method:
  *    `myButton.begin();`
  * 
- * 3. In the main `loop()` function, you MUST call the tick method on every iteration:
+ * 3. In the main `loop()` function, you MUST call the tick method on every iteration.
+ *    This method must be called frequently and rapidly. Do NOT use `delay()` in your
+ *    main loop, as it will prevent the button from being checked correctly.
  *    `myButton.tick();`
  * 
  * 4. To check for an event, call getEvent(). This will return the last event and

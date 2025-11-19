@@ -8,6 +8,10 @@
 ConfigManager configManager;
 ButtonHandler buttonHandler(BUTTON_PIN);
 
+// --- Non-blocking timer for the main loop ---
+unsigned long lastLoopMessageTime = 0;
+const long loopMessageInterval = 10000; // Print a message every 10 seconds
+
 void checkForFactoryReset();
 
 void setup() {
@@ -15,15 +19,10 @@ void setup() {
   while (!Serial) { delay(10); }
   Serial.println("\n\n--- Booting IoT Node ---");
 
-  // Initialize handlers
   configManager.begin();
   buttonHandler.begin();
-  
-  // Load the configuration from NVS
   configManager.loadConfig();
 
-  // Before doing anything else, check if the user is holding the button
-  // to force a factory reset. We'll check for 3 seconds.
   Serial.println("Checking for factory reset command (hold button)...");
   unsigned long startTime = millis();
   while (millis() - startTime < 3000) {
@@ -55,11 +54,16 @@ void setup() {
 }
 
 void loop() {
-  // The main loop should always check for a factory reset.
+  // These functions must be called as often as possible. The loop is now non-blocking.
   checkForFactoryReset();
 
-  Serial.println("Main loop running...");
-  delay(5000);
+  // --- Example of a non-blocking periodic task ---
+  unsigned long currentTime = millis();
+  if (currentTime - lastLoopMessageTime >= loopMessageInterval) {
+    lastLoopMessageTime = currentTime;
+    Serial.println("Main loop running...");
+    // In the future, other periodic tasks like reading a sensor would go here.
+  }
 }
 
 /**

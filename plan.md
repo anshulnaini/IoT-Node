@@ -39,12 +39,12 @@ This document outlines the development plan for the ESP32-based IoT Node. The pr
     *   Create a `ConfigManager` class to handle saving, loading, and clearing a `struct` of configuration data (WiFi credentials, server details, device name, etc.).
     *   Test that configuration persists after a power cycle and can be cleared.
 
-2.  **Captive Portal & Web Server:**
+2.  **Captive Portal & Web Server:** (DONE)
     *   Use the `WebServer` and `DNSServer` libraries (or a higher-level library like `WiFiManager`) to create a Soft AP.
     *   Implement a captive portal that redirects clients to a configuration web page.
     *   Create the HTML/CSS/JS for the configuration form with all the required fields.
 
-3.  **Integration:**
+3.  **Integration:**(DONE)
     *   Combine NV Memory and the captive portal.
     *   On boot, the device should check `ConfigManager` if it's configured.
         *   **If NOT configured:** Start the captive portal. When the form is submitted, save the data using `ConfigManager` and reboot.
