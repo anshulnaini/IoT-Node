@@ -16,7 +16,7 @@ This document outlines the development plan for the ESP32-based IoT Node. The pr
     *   Use the existing `OLEDHandler` class.
     *   Confirm it works by displaying a test message.
 
-3.  **I2C Sensor Integration:**
+3.  **I2C Sensor Integration:** (DONE)
     *   Choose and add a library for the I2C temperature/humidity sensor (e.g., Adafruit SHT31, AHTX0).
     *   Write a test sketch to read temperature and humidity values and print them to the Serial monitor.
 
