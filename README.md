@@ -19,9 +19,9 @@ This project is for a single, low-power, ESP32-C3 based IoT node designed to be 
 ## Hardware Requirements
 
 *   **Microcontroller:** ESP32-C3 (e.g., Seeed Studio XIAO ESP32C3, ESP32-C3-DevKitM-1)
-*   **Display:** 128x64 I2C OLED Display (SH1106 or SSD1306)
+*   **Display:** 128x64 I2C OLED Display (SH1106 or SSD1306)  (SDA 8, SCL 9)
 *   **Sensor:** I2C Temperature & Humidity Sensor (e.g., SHT31, AHT20)
-*   **Input:** 1x Tactile Pushbutton
+*   **Input:** 1x Tactile Pushbutton (Pin 10)
 *   **Power:**
     *   3x AAA Batteries
     *   2x NPN or N-Channel MOSFET transistors (for peripheral power switching)

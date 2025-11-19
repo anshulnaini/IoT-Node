@@ -1,64 +1,46 @@
 #include <Arduino.h>
-#include "OneButton.h"
+#include "ButtonHandler.h"
 
+// Define the pin the button is connected to.
 #define BUTTON_PIN 10
-OneButton button(BUTTON_PIN, true, true);
 
-// --- Non-Blocking State Machine ---
-enum ButtonState { S_IDLE, S_DOUBLE_CLICK_PENDING };
-ButtonState currentState = S_IDLE;
-unsigned long doubleClickStartTime = 0;
-
-// This timeout MUST be longer than the time between the library firing
-// a double-click event and a subsequent single-click event (~635ms in tests).
-const int TRIPLE_CLICK_TIMEOUT = 700; 
-
-// Forward declaration
-void handleSingleClick();
-void handleDoubleClick();
-void handleLongPress();
+// Create an instance of our button handler.
+ButtonHandler buttonHandler(BUTTON_PIN);
 
 void setup() {
   Serial.begin(115200);
   while (!Serial) { delay(10); }
-  Serial.println("Pushbutton test: Corrected timeout.");
-
-  button.attachClick(handleSingleClick);
-  button.attachDoubleClick(handleDoubleClick);
-  button.attachLongPressStop(handleLongPress);
+  Serial.println("Button handler abstraction test.");
+  
+  // Initialize the button handler.
+  buttonHandler.begin();
 }
 
 void loop() {
-  button.tick(); // Keep the button library running
+  // We must call the tick() method in every loop.
+  buttonHandler.tick();
 
-  // Check if a double-click is pending and has timed out
-  if (currentState == S_DOUBLE_CLICK_PENDING && (millis() - doubleClickStartTime > TRIPLE_CLICK_TIMEOUT)) {
-    Serial.println("Button double-clicked.");
-    currentState = S_IDLE; // Reset state
+  // Get the latest event from the handler.
+  ButtonEvent event = buttonHandler.getEvent();
+
+  // Process the event.
+  switch (event) {
+    case EV_SINGLE_CLICK:
+      Serial.println("Event: Single Click");
+      break;
+    case EV_DOUBLE_CLICK:
+      Serial.println("Event: Double Click");
+      break;
+    case EV_TRIPLE_CLICK:
+      Serial.println("Event: Triple Click");
+      break;
+    case EV_LONG_PRESS:
+      Serial.println("Event: Long Press");
+      break;
+    
+    case EV_NONE:
+    default:
+      // No event occurred in this loop.
+      break;
   }
-}
-
-// --- Callback Functions ---
-
-void handleSingleClick() {
-  if (currentState == S_DOUBLE_CLICK_PENDING) {
-    // This is the third click!
-    Serial.println("Button triple-clicked.");
-    currentState = S_IDLE; // Reset state
-  } else {
-    // This is a normal single click
-    Serial.println("Button single-clicked.");
-  }
-}
-
-void handleDoubleClick() {
-  // A double-click has happened. Start the timer and wait to see if a third click follows.
-  currentState = S_DOUBLE_CLICK_PENDING;
-  doubleClickStartTime = millis();
-}
-
-void handleLongPress() {
-  Serial.println("Button long-pressed.");
-  // Ensure we cancel any pending double-click state
-  currentState = S_IDLE;
 }

@@ -20,7 +20,7 @@ This document outlines the development plan for the ESP32-based IoT Node. The pr
     *   Choose and add a library for the I2C temperature/humidity sensor (e.g., Adafruit SHT31, AHTX0).
     *   Write a test sketch to read temperature and humidity values and print them to the Serial monitor.
 
-4.  **Pushbutton Integration:**
+4.  **Pushbutton Integration:** (DONE)
     *   Add the `mathertel/OneButton` library to handle debouncing, multi-press, and long-press events.
     *   Write a test sketch to detect and print single, double, triple, and long-press events to the Serial monitor.
 
