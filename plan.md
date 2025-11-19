@@ -34,7 +34,7 @@ This document outlines the development plan for the ESP32-based IoT Node. The pr
 
 **Goal:** Implement the device setup and configuration mechanism.
 
-1.  **Non-Volatile (NV) Memory:**
+1.  **Non-Volatile (NV) Memory:** (DONE)
     *   Use the ESP32 `Preferences` library.
     *   Create a `ConfigManager` class to handle saving, loading, and clearing a `struct` of configuration data (WiFi credentials, server details, device name, etc.).
     *   Test that configuration persists after a power cycle and can be cleared.
