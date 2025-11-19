@@ -56,7 +56,7 @@ This document outlines the development plan for the ESP32-based IoT Node. The pr
 
 **Goal:** Send data to the remote web server.
 
-1.  **WiFi Connection:**
+1.  **WiFi Connection:** (DONE)
     *   Using the loaded configuration, connect to the user's WiFi network.
     *   Display the connection status (and IP address on success) on the OLED screen using `OLEDHandler`.
 
