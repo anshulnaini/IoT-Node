@@ -3,11 +3,11 @@
 #include "PortalManager.h"
 #include "ButtonHandler.h"
 #include "OLEDHandler.h"
+#include "ApiHandler.h"
 #include <WiFi.h>
 
 // --- Pin Definitions ---
 #define BUTTON_PIN 10
-// Default I2C pins for XIAO ESP32-C3
 #define I2C_SDA 8
 #define I2C_SCL 9
 
@@ -15,6 +15,7 @@
 ConfigManager configManager;
 ButtonHandler buttonHandler(BUTTON_PIN);
 OLEDHandler oled(I2C_SDA, I2C_SCL);
+ApiHandler apiHandler(configManager);
 
 // --- Non-blocking timer for the main loop ---
 unsigned long lastLoopMessageTime = 0;
@@ -29,7 +30,6 @@ void setup() {
   while (!Serial) { delay(10); }
   Serial.println("\n\n--- Booting IoT Node ---");
 
-  // Initialize handlers
   oled.initializeOLED();
   oled.displayText("Booting...");
   configManager.begin();
@@ -61,17 +61,30 @@ void setup() {
 
   } else {
     // --- NORMAL OPERATION ---
-    Serial.println("Device is configured. Connecting to WiFi...");
     if (connectToWiFi()) {
-      Serial.println("WiFi Connected!");
-      String ipAddr = "IP: " + WiFi.localIP().toString();
-      oled.displayText(ipAddr.c_str());
-      delay(5000); // Show IP for 5 seconds
+      oled.displayText("Registering...");
+      if (apiHandler.registerDeviceIfNeeded()) {
+        oled.displayText("Registered!");
+        delay(2000); // Show "Registered!" for a moment
+
+        // --- Send a test telemetry packet ---
+        oled.displayText("Sending...");
+        Serial.println("Sending initial telemetry packet...");
+        if (apiHandler.sendTelemetry(24.5, 55.8, 95.0)) {
+          oled.displayText("Sent!");
+          Serial.println("Telemetry sent successfully.");
+        } else {
+          oled.displayText("Send Failed");
+          Serial.println("Failed to send telemetry.");
+        }
+
+      } else {
+        oled.displayText("Reg. Failed");
+      }
     } else {
-      Serial.println("WiFi Connection Failed.");
       oled.displayText("WiFi Failed");
-      delay(5000);
     }
+    delay(5000); // Keep message on screen
   }
 }
 
@@ -82,7 +95,6 @@ void loop() {
   if (currentTime - lastLoopMessageTime >= loopMessageInterval) {
     lastLoopMessageTime = currentTime;
     Serial.println("Main loop running...");
-    // In the future, this is where we will enter deep sleep.
   }
 }
 
@@ -113,13 +125,11 @@ bool connectToWiFi() {
   unsigned long startTime = millis();
   int dots = 0;
   while (WiFi.status() != WL_CONNECTED) {
-    // Timeout after 15 seconds
     if (millis() - startTime > 15000) {
       WiFi.disconnect();
       return false;
     }
     
-    // Animate "Connecting..." on the OLED
     if(++dots > 3) {
       dots = 0;
       connectingMsg = "Connecting";
@@ -132,6 +142,6 @@ bool connectToWiFi() {
     Serial.print(".");
   }
   
-  Serial.println(); // Newline after the dots
+  Serial.println("\nWiFi Connected! IP: " + WiFi.localIP().toString());
   return true;
 }
