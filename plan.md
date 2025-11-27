@@ -60,7 +60,7 @@ This document outlines the development plan for the ESP32-based IoT Node. The pr
     *   Using the loaded configuration, connect to the user's WiFi network.
     *   Display the connection status (and IP address on success) on the OLED screen using `OLEDHandler`.
 
-2.  **HTTP Client:**
+2.  **HTTP Client:** (DONE)
     *   Use the built-in `HTTPClient` library.
     *   Use `bblanchon/ArduinoJson` to create the JSON payload matching the Prisma schema.
     *   Write a function to send telemetry data to the server.

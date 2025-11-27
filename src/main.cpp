@@ -27,7 +27,6 @@ bool connectToWiFi();
 
 void setup() {
   Serial.begin(115200);
-  while (!Serial) { delay(10); }
   Serial.println("\n\n--- Booting IoT Node ---");
 
   oled.initializeOLED();
