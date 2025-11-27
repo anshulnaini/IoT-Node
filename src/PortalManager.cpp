@@ -31,7 +31,7 @@ const char CONFIG_PAGE[] PROGMEM = R"rawliteral(
             </div>
             <div class="group">
                 <label for="server">Server URL</label>
-                <input type="text" id="server" name="server" placeholder="http://192.168.1.100:3000/api" required>
+                <input type="text" id="server" name="server" placeholder="http://192.168.1.100:4000/api" required>
             </div>
             <div class="group">
                 <label for="name">Device Name</label>
