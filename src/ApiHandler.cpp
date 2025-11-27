@@ -28,7 +28,7 @@ bool ApiHandler::registerDeviceIfNeeded() {
 
   // --- Perform the HTTP POST request ---
   HTTPClient http;
-  String registrationUrl = String(config.serverUrl) + "/api/devices";
+  String registrationUrl = String(config.serverUrl) + "/devices";
   http.begin(registrationUrl);
   http.addHeader("Content-Type", "application/json");
 
@@ -88,7 +88,7 @@ bool ApiHandler::sendTelemetry(float temperature, float humidity, float battery)
 
   // --- Perform the HTTP POST request ---
   HTTPClient http;
-  String ingestUrl = String(config.serverUrl) + "/api/ingest";
+  String ingestUrl = String(config.serverUrl) + "/ingest";
   http.begin(ingestUrl);
   http.addHeader("Content-Type", "application/json");
 
