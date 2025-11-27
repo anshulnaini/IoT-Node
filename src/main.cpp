@@ -12,13 +12,15 @@
 #define BUTTON_PIN 0
 #define I2C_SDA 8
 #define I2C_SCL 9
+#define OLED_POWER_PIN 3
+#define SENSOR_POWER_PIN 2
 
 // --- Global Objects ---
 ConfigManager configManager;
 ButtonHandler buttonHandler(BUTTON_PIN);
 OLEDHandler oled(I2C_SDA, I2C_SCL);
 ApiHandler apiHandler(configManager);
-PowerManager powerManager(BUTTON_PIN);
+PowerManager powerManager(BUTTON_PIN, OLED_POWER_PIN, SENSOR_POWER_PIN);
 PortalManager portalManager(configManager);
 
 // --- State Machine ---
@@ -43,7 +45,12 @@ bool connectToWiFi();
 void setup() {
   Serial.begin(115200);
   //while (!Serial) { delay(10); }
-  delay(3000);
+  delay(3000); // Wait for serial to stabilize
+  
+  powerManager.peripherals_on();
+  // Add a small delay to ensure peripherals are stable before use.
+  delay(100); 
+
   Serial.println("\n\n--- Booting IoT Node ---");
 
   oled.initializeOLED();
@@ -72,7 +79,8 @@ void loop() {
       Serial.println("State: BOOT");
       if (configManager.isConfigured()) {
         currentState = STATE_CONNECTING_WIFI;
-      } else {
+      }
+      else {
         currentState = STATE_SETUP_START;
       }
       break;
@@ -120,7 +128,8 @@ void loop() {
       Serial.println("State: CONNECTING_WIFI");
       if (connectToWiFi()) {
         currentState = STATE_TELEMETRY_SEND;
-      } else {
+      }
+      else {
         oled.displayText("WiFi Failed");
         stateTimer = millis();
         currentState = STATE_TASK_COMPLETE;
@@ -134,10 +143,12 @@ void loop() {
         oled.displayText("Sending...");
         if (apiHandler.sendTelemetry(24.5, 55.8, 95.0)) {
           oled.displayText("Sent!");
-        } else {
+        }
+        else {
           oled.displayText("Send Failed");
         }
-      } else {
+      }
+      else {
         oled.displayText("Reg. Failed");
       }
       stateTimer = millis();
@@ -154,6 +165,11 @@ void loop() {
     case STATE_DEEP_SLEEP:
       Serial.println("State: DEEP_SLEEP");
       oled.displayText("Sleeping...");
+      
+      // Turn off peripherals and wait a moment for them to power down
+      powerManager.peripherals_off();
+      delay(100);
+
       // Use a default sleep interval if not configured
       int sleepInterval = configManager.getConfig().sleepIntervalSeconds;
       if (sleepInterval <= 0) {

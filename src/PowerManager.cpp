@@ -1,7 +1,22 @@
 #include "PowerManager.h"
 #include "esp_sleep.h"
 
-PowerManager::PowerManager(int buttonPin) : _buttonPin(buttonPin) {
+PowerManager::PowerManager(int buttonPin, int oledPowerPin, int sensorPowerPin) 
+  : _buttonPin(buttonPin), _oledPowerPin(oledPowerPin), _sensorPowerPin(sensorPowerPin) {
+  pinMode(_oledPowerPin, OUTPUT);
+  pinMode(_sensorPowerPin, OUTPUT);
+}
+
+void PowerManager::peripherals_on() {
+  Serial.println("Turning peripherals ON.");
+  digitalWrite(_oledPowerPin, HIGH);
+  digitalWrite(_sensorPowerPin, HIGH);
+}
+
+void PowerManager::peripherals_off() {
+  Serial.println("Turning peripherals OFF.");
+  digitalWrite(_oledPowerPin, LOW);
+  digitalWrite(_sensorPowerPin, LOW);
 }
 
 void PowerManager::enterDeepSleep(uint32_t sleepDurationSeconds) {

@@ -13,15 +13,23 @@ public:
    * @brief Construct a new Power Manager object.
    * 
    * @param buttonPin The GPIO pin connected to the wake-up button.
+   * @param oledPowerPin The GPIO pin controlling the OLED power transistor.
+   * @param sensorPowerPin The GPIO pin controlling the sensor power transistor.
    */
-  PowerManager(int buttonPin);
+  PowerManager(int buttonPin, int oledPowerPin, int sensorPowerPin);
+
+  /**
+   * @brief Turns power ON for the peripherals (OLED, sensor).
+   */
+  void peripherals_on();
+
+  /**
+   * @brief Turns power OFF for the peripherals (OLED, sensor).
+   */
+  void peripherals_off();
 
   /**
    * @brief Configures the wake-up sources and puts the device into deep sleep.
-   * 
-   * The device can be woken up by two sources:
-   * 1. A timer expiring after the specified duration.
-   * 2. The external wake-up button being pressed.
    * 
    * @param sleepDurationSeconds The number of seconds to sleep before the timer wakes the device.
    */
@@ -29,6 +37,8 @@ public:
 
 private:
   int _buttonPin;
+  int _oledPowerPin;
+  int _sensorPowerPin;
 };
 
 #endif // POWERMANAGER_H

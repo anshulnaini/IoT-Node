@@ -80,7 +80,7 @@ This document outlines the development plan for the ESP32-based IoT Node. The pr
     *   Create a `PowerManager` class to handle `peripherals_on()`, `peripherals_off()`, and `enterDeepSleep()`.
     *   Use `esp_deep_sleep_start()` to put the device to sleep for the configured sample period.
 
-3.  **Wake-up Logic:**
+3.  **Wake-up Logic:** (DONE)
     *   Use `RTC_DATA_ATTR` to store a variable that indicates the reason for waking up (e.g., timer, button press).
     *   Configure a GPIO pin connected to the button as an external wake-up source.
     *   In the `setup()` function, check the wake-up reason to determine the correct behavior (e.g., send telemetry vs. show info screen).
