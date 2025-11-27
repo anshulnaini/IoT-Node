@@ -74,6 +74,21 @@ The pushbutton behavior depends on the device's current state:
 
 ---
 
+## Application Logic (Finite State Machine)
+
+The device operates on a non-blocking, finite state machine (FSM) implemented in the main `loop()`. This structure ensures that the device remains responsive to button presses at all times, as there are no `delay()` calls or other blocking code in the main program flow.
+
+The core logic transitions between the following states:
+
+*   `STATE_BOOT`: The initial state on power-up. It checks if the device is configured and transitions to the appropriate next state.
+*   `STATE_SETUP_...`: A series of states that activate and manage the web portal for first-time configuration.
+*   `STATE_CONNECTING_WIFI`: Manages connecting to the user's configured WiFi network.
+*   `STATE_TELEMETRY_SEND`: Handles device registration (if needed) and sends the sensor data to the server.
+*   `STATE_TASK_COMPLETE`: A temporary state used to display a status message (e.g., "Sent!" or "Failed") on the screen for a few seconds without blocking the main loop.
+*   `STATE_DEEP_SLEEP`: The low-power state. The device will (eventually) enter deep sleep to conserve battery and will wake up after a configured interval or via a button press. This is currently simulated with a non-blocking timer.
+
+---
+
 ## API Interaction
 
 ### Device Registration (First Time Only)

@@ -72,7 +72,7 @@ This document outlines the development plan for the ESP32-based IoT Node. The pr
 
 **Goal:** Implement the main application logic and power-saving features.
 
-1.  **Finite State Machine (FSM):**
+1.  **Finite State Machine (FSM):** (DONE)
     *   Define the main states: `SETUP`, `CONNECTING`, `RUNNING_TELEMETRY`, `INFO_DISPLAY`, `FACTORY_RESET`.
     *   The `loop()` function will primarily manage transitions between these states.
 

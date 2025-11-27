@@ -4,10 +4,12 @@
 #include "ButtonHandler.h"
 #include "OLEDHandler.h"
 #include "ApiHandler.h"
+#include "PowerManager.h"
+#include "esp_sleep.h"
 #include <WiFi.h>
 
 // --- Pin Definitions ---
-#define BUTTON_PIN 10
+#define BUTTON_PIN 0
 #define I2C_SDA 8
 #define I2C_SCL 9
 
@@ -16,17 +18,32 @@ ConfigManager configManager;
 ButtonHandler buttonHandler(BUTTON_PIN);
 OLEDHandler oled(I2C_SDA, I2C_SCL);
 ApiHandler apiHandler(configManager);
+PowerManager powerManager(BUTTON_PIN);
+PortalManager portalManager(configManager);
 
-// --- Non-blocking timer for the main loop ---
-unsigned long lastLoopMessageTime = 0;
-const long loopMessageInterval = 10000;
+// --- State Machine ---
+enum DeviceState {
+  STATE_BOOT,
+  STATE_INFO_DISPLAY,
+  STATE_SETUP_START,
+  STATE_SETUP_RUNNING,
+  STATE_SETUP_COMPLETE,
+  STATE_CONNECTING_WIFI,
+  STATE_TELEMETRY_SEND,
+  STATE_TASK_COMPLETE,
+  STATE_DEEP_SLEEP
+};
+DeviceState currentState = STATE_BOOT;
+unsigned long stateTimer = 0;
 
 // --- Function Prototypes ---
-void checkForFactoryReset();
+void checkWakeupReason();
 bool connectToWiFi();
 
 void setup() {
   Serial.begin(115200);
+  //while (!Serial) { delay(10); }
+  delay(3000);
   Serial.println("\n\n--- Booting IoT Node ---");
 
   oled.initializeOLED();
@@ -35,112 +52,160 @@ void setup() {
   buttonHandler.begin();
   configManager.loadConfig();
 
-  Serial.println("Checking for factory reset command (hold button)...");
-  unsigned long startTime = millis();
-  while (millis() - startTime < 3000) {
-    checkForFactoryReset();
-  }
-
-  if (!configManager.isConfigured()) {
-    // --- SETUP MODE ---
-    oled.displayText("Setup Mode");
-    Serial.println("Device is not configured. Starting setup portal.");
-    PortalManager portalManager(configManager);
-    portalManager.start();
-
-    while (!portalManager.isConfigSaved()) {
-      portalManager.loop();
-    }
-
-    portalManager.stop();
-    oled.displayText("Restarting...");
-    Serial.println("Configuration saved. Restarting device in 5 seconds...");
-    delay(5000);
-    ESP.restart();
-
-  } else {
-    // --- NORMAL OPERATION ---
-    if (connectToWiFi()) {
-      oled.displayText("Registering...");
-      if (apiHandler.registerDeviceIfNeeded()) {
-        oled.displayText("Registered!");
-        delay(2000); // Show "Registered!" for a moment
-
-        // --- Send a test telemetry packet ---
-        oled.displayText("Sending...");
-        Serial.println("Sending initial telemetry packet...");
-        if (apiHandler.sendTelemetry(24.5, 55.8, 95.0)) {
-          oled.displayText("Sent!");
-          Serial.println("Telemetry sent successfully.");
-        } else {
-          oled.displayText("Send Failed");
-          Serial.println("Failed to send telemetry.");
-        }
-
-      } else {
-        oled.displayText("Reg. Failed");
-      }
-    } else {
-      oled.displayText("WiFi Failed");
-    }
-    delay(5000); // Keep message on screen
-  }
+  checkWakeupReason();
 }
 
 void loop() {
-  checkForFactoryReset();
-
-  unsigned long currentTime = millis();
-  if (currentTime - lastLoopMessageTime >= loopMessageInterval) {
-    lastLoopMessageTime = currentTime;
-    Serial.println("Main loop running...");
-  }
-}
-
-void checkForFactoryReset() {
   buttonHandler.tick();
-  if (buttonHandler.getEvent() == EV_LONG_PRESS) {
+  ButtonEvent event = buttonHandler.getEvent();
+
+  if (event == EV_LONG_PRESS) {
     Serial.println("\n!!! FACTORY RESET TRIGGERED !!!");
     oled.displayText("FACTORY RESET");
-    Serial.println("Clearing configuration and restarting in 3 seconds...");
     configManager.clearConfig();
     delay(3000);
     ESP.restart();
+  }
+
+  switch (currentState) {
+    case STATE_BOOT:
+      Serial.println("State: BOOT");
+      if (configManager.isConfigured()) {
+        currentState = STATE_CONNECTING_WIFI;
+      } else {
+        currentState = STATE_SETUP_START;
+      }
+      break;
+
+    case STATE_INFO_DISPLAY:
+      if (stateTimer == 0) {
+        Serial.println("State: INFO_DISPLAY");
+        oled.displayText("Button Wakeup!"); // Placeholder
+        stateTimer = millis();
+      }
+      if (millis() - stateTimer > 10000) { // Show info for 10s
+        stateTimer = 0;
+        currentState = STATE_DEEP_SLEEP;
+      }
+      break;
+
+    case STATE_SETUP_START:
+      Serial.println("State: SETUP_START");
+      oled.displayText("Setup Mode");
+      portalManager.start();
+      currentState = STATE_SETUP_RUNNING;
+      break;
+
+    case STATE_SETUP_RUNNING:
+      portalManager.loop();
+      if (portalManager.isConfigSaved()) {
+        stateTimer = 0; // Reset timer for next use
+        currentState = STATE_SETUP_COMPLETE;
+      }
+      break;
+
+    case STATE_SETUP_COMPLETE:
+       if (stateTimer == 0) {
+        Serial.println("State: SETUP_COMPLETE");
+        portalManager.stop();
+        oled.displayText("Restarting...");
+        stateTimer = millis();
+      }
+      if (millis() - stateTimer > 5000) {
+        ESP.restart();
+      }
+      break;
+
+    case STATE_CONNECTING_WIFI:
+      Serial.println("State: CONNECTING_WIFI");
+      if (connectToWiFi()) {
+        currentState = STATE_TELEMETRY_SEND;
+      } else {
+        oled.displayText("WiFi Failed");
+        stateTimer = millis();
+        currentState = STATE_TASK_COMPLETE;
+      }
+      break;
+
+    case STATE_TELEMETRY_SEND:
+      Serial.println("State: TELEMETRY_SEND");
+      oled.displayText("Registering...");
+      if (apiHandler.registerDeviceIfNeeded()) {
+        oled.displayText("Sending...");
+        if (apiHandler.sendTelemetry(24.5, 55.8, 95.0)) {
+          oled.displayText("Sent!");
+        } else {
+          oled.displayText("Send Failed");
+        }
+      } else {
+        oled.displayText("Reg. Failed");
+      }
+      stateTimer = millis();
+      currentState = STATE_TASK_COMPLETE;
+      break;
+
+    case STATE_TASK_COMPLETE:
+      if (millis() - stateTimer > 5000) {
+        stateTimer = 0;
+        currentState = STATE_DEEP_SLEEP;
+      }
+      break;
+
+    case STATE_DEEP_SLEEP:
+      Serial.println("State: DEEP_SLEEP");
+      oled.displayText("Sleeping...");
+      // Use a default sleep interval if not configured
+      int sleepInterval = configManager.getConfig().sleepIntervalSeconds;
+      if (sleepInterval <= 0) {
+        sleepInterval = 300; // Default to 5 minutes if not set
+      }
+      powerManager.enterDeepSleep(sleepInterval);
+      break;
+  }
+}
+
+void checkWakeupReason() {
+  esp_sleep_wakeup_cause_t wakeup_reason = esp_sleep_get_wakeup_cause();
+  switch (wakeup_reason) {
+    case ESP_SLEEP_WAKEUP_TIMER:
+      Serial.println("Wakeup caused by timer");
+      currentState = STATE_CONNECTING_WIFI;
+      break;
+    case ESP_SLEEP_WAKEUP_GPIO:
+      Serial.println("Wakeup caused by GPIO");
+      currentState = STATE_INFO_DISPLAY;
+      break;
+    case ESP_SLEEP_WAKEUP_UNDEFINED:
+    default:
+      Serial.println("Wakeup not caused by deep sleep (power on)");
+      currentState = STATE_BOOT;
+      break;
   }
 }
 
 bool connectToWiFi() {
   const DeviceConfig& config = configManager.getConfig();
-  if (strlen(config.wifiSSID) == 0) {
-    return false;
-  }
+  if (strlen(config.wifiSSID) == 0) return false;
 
   WiFi.mode(WIFI_STA);
   WiFi.begin(config.wifiSSID, config.wifiPassword);
 
-  String connectingMsg = "Connecting";
-  oled.displayText(connectingMsg.c_str());
+  oled.displayText("Connecting...");
+  Serial.print("Connecting to WiFi...");
 
   unsigned long startTime = millis();
-  int dots = 0;
   while (WiFi.status() != WL_CONNECTED) {
     if (millis() - startTime > 15000) {
       WiFi.disconnect();
+      Serial.println(" failed!");
       return false;
     }
-    
-    if(++dots > 3) {
-      dots = 0;
-      connectingMsg = "Connecting";
-    } else {
-      connectingMsg += ".";
-    }
-    oled.displayText(connectingMsg.c_str());
-    
-    delay(500);
+    buttonHandler.tick();
+    if (buttonHandler.getEvent() == EV_LONG_PRESS) { ESP.restart(); }
+    delay(200); // Keep small delay to prevent busy-looping too fast
     Serial.print(".");
   }
   
-  Serial.println("\nWiFi Connected! IP: " + WiFi.localIP().toString());
+  Serial.println("\nWiFi Connected!");
   return true;
 }
