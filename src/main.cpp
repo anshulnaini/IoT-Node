@@ -5,6 +5,7 @@
 #include "OLEDHandler.h"
 #include "ApiHandler.h"
 #include "PowerManager.h"
+#include "SensorHandler.h"
 #include "esp_sleep.h"
 #include <WiFi.h>
 
@@ -22,6 +23,7 @@ OLEDHandler oled(I2C_SDA, I2C_SCL);
 ApiHandler apiHandler(configManager);
 PowerManager powerManager(BUTTON_PIN, OLED_POWER_PIN, SENSOR_POWER_PIN);
 PortalManager portalManager(configManager);
+SensorHandler sensorHandler;
 
 // --- State Machine ---
 enum DeviceState {
@@ -57,6 +59,7 @@ void setup() {
   oled.displayText("Booting...");
   configManager.begin();
   buttonHandler.begin();
+  sensorHandler.begin();
   configManager.loadConfig();
 
   checkWakeupReason();
@@ -88,10 +91,36 @@ void loop() {
     case STATE_INFO_DISPLAY:
       if (stateTimer == 0) {
         Serial.println("State: INFO_DISPLAY");
-        oled.displayText("Button Wakeup!"); // Placeholder
+        const DeviceConfig& config = configManager.getConfig();
+        float temp = sensorHandler.readTemperature();
+        float humidity = sensorHandler.readHumidity();
+        oled.displayInfo(config.deviceName, config.deviceId, "N/A", temp, humidity);
         stateTimer = millis();
       }
-      if (millis() - stateTimer > 10000) { // Show info for 10s
+
+      // Event handling for this state
+      if (event == EV_SINGLE_CLICK) {
+        Serial.println("Single-click: Going to sleep.");
+        stateTimer = 0;
+        currentState = STATE_DEEP_SLEEP;
+        break; // Exit the switch case
+      }
+      if (event == EV_DOUBLE_CLICK) {
+        Serial.println("Double-click: Forcing telemetry send.");
+        stateTimer = 0;
+        currentState = STATE_TELEMETRY_SEND;
+        break; // Exit the switch case
+      }
+      if (event == EV_TRIPLE_CLICK) {
+        Serial.println("Triple-click: Entering setup mode.");
+        stateTimer = 0;
+        currentState = STATE_SETUP_START;
+        break; // Exit the switch case
+      }
+
+      // Timeout to go to sleep if no interaction
+      if (millis() - stateTimer > 10000) {
+        Serial.println("Info display timed out. Going to sleep.");
         stateTimer = 0;
         currentState = STATE_DEEP_SLEEP;
       }
@@ -141,7 +170,11 @@ void loop() {
       oled.displayText("Registering...");
       if (apiHandler.registerDeviceIfNeeded()) {
         oled.displayText("Sending...");
-        if (apiHandler.sendTelemetry(24.5, 55.8, 95.0)) {
+        float temp = sensorHandler.readTemperature();
+        float humidity = sensorHandler.readHumidity();
+        Serial.printf("Readings: Temp=%.2f C, Humidity=%.2f %%\n", temp, humidity);
+
+        if (apiHandler.sendTelemetry(temp, humidity, 95.0)) { // Using 95.0 as placeholder for battery
           oled.displayText("Sent!");
         }
         else {

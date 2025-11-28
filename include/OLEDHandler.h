@@ -18,6 +18,17 @@ public:
     // function to display text
     void displayText(const char* text);
 
+    /**
+     * @brief Displays a formatted screen with key device information and sensor readings.
+     * 
+     * @param deviceName The configured name of the device.
+     * @param deviceId The unique ID assigned by the server.
+     * @param ipAddress The current IP address of the device.
+     * @param temp The current temperature in Celsius.
+     * @param humidity The current relative humidity.
+     */
+    void displayInfo(const char* deviceName, const char* deviceId, const char* ipAddress, float temp, float humidity);
+
     // function to clear the display
     void clearDisplay();
 

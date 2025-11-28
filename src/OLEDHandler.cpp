@@ -49,6 +49,37 @@ void OLEDHandler::displayText(const char* text) {
     display.display();
 }
 
+void OLEDHandler::displayInfo(const char* deviceName, const char* deviceId, const char* ipAddress, float temp, float humidity) {
+    display.clearDisplay();
+    display.setTextSize(1);
+    display.setTextColor(SH110X_WHITE);
+    display.setCursor(0, 0);
+
+    display.print("Name: ");
+    display.println(deviceName);
+
+    display.print("ID: ");
+    char id_short[13];
+    strncpy(id_short, deviceId, 12);
+    id_short[12] = '\0';
+    display.println(id_short);
+
+    display.print("IP: ");
+    display.println(ipAddress);
+
+    display.setCursor(0, 40);
+    display.print("Temp: ");
+    display.print(temp, 1);
+    display.println(" C");
+
+    display.setCursor(0, 50);
+    display.print("Humi: ");
+    display.print(humidity, 1);
+    display.println(" %");
+
+    display.display();
+}
+
 
 // Fuction to clear the display
 
