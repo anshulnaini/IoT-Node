@@ -12,8 +12,8 @@ ConfigManager::ConfigManager() {
 }
 
 void ConfigManager::begin() {
-  // The 'begin' method should be called once in setup.
-  // The second argument 'false' means we open it in read/write mode.
+  // HAS TO be called once in setup
+  // false means we open it in r/w mode.
   preferences.begin(PREFERENCES_NAMESPACE, false);
 }
 
@@ -46,7 +46,7 @@ void ConfigManager::saveConfig() {
 
 void ConfigManager::clearConfig() {
   preferences.clear();
-  memset(&_config, 0, sizeof(DeviceConfig)); // Reset in-memory struct
+  memset(&_config, 0, sizeof(DeviceConfig)); // Reset struct in NV memory
 }
 
 const DeviceConfig& ConfigManager::getConfig() const {
@@ -58,6 +58,6 @@ DeviceConfig& ConfigManager::getMutableConfig() {
 }
 
 bool ConfigManager::isConfigured() {
-  // We consider the device configured if the flag is set.
+  // device configured if the flag is set.
   return _config.configured;
 }

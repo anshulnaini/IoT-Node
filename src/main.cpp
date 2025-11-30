@@ -9,14 +9,14 @@
 #include "esp_sleep.h"
 #include <WiFi.h>
 
-// --- Pin Definitions ---
+//Pins
 #define BUTTON_PIN 0
 #define I2C_SDA 8
 #define I2C_SCL 9
 #define OLED_POWER_PIN 3
 #define SENSOR_POWER_PIN 2
 
-// --- Global Objects ---
+// Global Objects
 ConfigManager configManager;
 ButtonHandler buttonHandler(BUTTON_PIN);
 OLEDHandler oled(I2C_SDA, I2C_SCL);
@@ -25,7 +25,7 @@ PowerManager powerManager(BUTTON_PIN, OLED_POWER_PIN, SENSOR_POWER_PIN);
 PortalManager portalManager(configManager);
 SensorHandler sensorHandler;
 
-// --- State Machine ---
+//State Machine
 enum DeviceState {
   STATE_BOOT,
   STATE_INFO_DISPLAY,
@@ -40,20 +40,19 @@ enum DeviceState {
 DeviceState currentState = STATE_BOOT;
 unsigned long stateTimer = 0;
 
-// --- Function Prototypes ---
+// prototypes
 void checkWakeupReason();
 bool connectToWiFi();
 
+//setup
 void setup() {
   Serial.begin(115200);
-  //while (!Serial) { delay(10); }
-  delay(3000); // Wait for serial to stabilize
+  delay(100);
   
   powerManager.peripherals_on();
-  // Add a small delay to ensure peripherals are stable before use.
   delay(100); 
 
-  Serial.println("\n\n--- Booting IoT Node ---");
+  Serial.println("\n\n Booting IoT Node ");
 
   oled.initializeOLED();
   oled.displayText("Booting...");
@@ -65,6 +64,8 @@ void setup() {
   checkWakeupReason();
 }
 
+
+//loop
 void loop() {
   buttonHandler.tick();
   ButtonEvent event = buttonHandler.getEvent();
@@ -103,19 +104,19 @@ void loop() {
         Serial.println("Single-click: Going to sleep.");
         stateTimer = 0;
         currentState = STATE_DEEP_SLEEP;
-        break; // Exit the switch case
+        break; 
       }
       if (event == EV_DOUBLE_CLICK) {
         Serial.println("Double-click: Forcing telemetry send.");
         stateTimer = 0;
         currentState = STATE_TELEMETRY_SEND;
-        break; // Exit the switch case
+        break; 
       }
       if (event == EV_TRIPLE_CLICK) {
         Serial.println("Triple-click: Entering setup mode.");
         stateTimer = 0;
         currentState = STATE_SETUP_START;
-        break; // Exit the switch case
+        break; 
       }
 
       // Timeout to go to sleep if no interaction
@@ -174,7 +175,7 @@ void loop() {
         float humidity = sensorHandler.readHumidity();
         Serial.printf("Readings: Temp=%.2f C, Humidity=%.2f %%\n", temp, humidity);
 
-        if (apiHandler.sendTelemetry(temp, humidity, 95.0)) { // Using 95.0 as placeholder for battery
+        if (apiHandler.sendTelemetry(temp, humidity, 95.0)) { // havent figures out battery reading so this is a placeholder
           oled.displayText("Sent!");
         }
         else {
@@ -199,20 +200,23 @@ void loop() {
       Serial.println("State: DEEP_SLEEP");
       oled.displayText("Sleeping...");
       
-      // Turn off peripherals and wait a moment for them to power down
+      // Turn off peripherals and wait for them to power down
       powerManager.peripherals_off();
       delay(100);
 
-      // Use a default sleep interval if not configured
+      // Use  sleep interval 
       int sleepInterval = configManager.getConfig().sleepIntervalSeconds;
+      //default
       if (sleepInterval <= 0) {
-        sleepInterval = 300; // Default to 5 minutes if not set
+        sleepInterval = 300; 
       }
       powerManager.enterDeepSleep(sleepInterval);
       break;
   }
 }
 
+
+// checks why it woke up to figure out what state it should be in
 void checkWakeupReason() {
   esp_sleep_wakeup_cause_t wakeup_reason = esp_sleep_get_wakeup_cause();
   switch (wakeup_reason) {
@@ -226,12 +230,14 @@ void checkWakeupReason() {
       break;
     case ESP_SLEEP_WAKEUP_UNDEFINED:
     default:
-      Serial.println("Wakeup not caused by deep sleep (power on)");
+      Serial.println("Wakeup not caused by deep sleep");
       currentState = STATE_BOOT;
       break;
   }
 }
 
+
+// tries to connect to the wifi
 bool connectToWiFi() {
   const DeviceConfig& config = configManager.getConfig();
   if (strlen(config.wifiSSID) == 0) return false;
@@ -251,7 +257,7 @@ bool connectToWiFi() {
     }
     buttonHandler.tick();
     if (buttonHandler.getEvent() == EV_LONG_PRESS) { ESP.restart(); }
-    delay(200); // Keep small delay to prevent busy-looping too fast
+    delay(200);
     Serial.print(".");
   }
   

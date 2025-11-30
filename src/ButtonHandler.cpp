@@ -1,7 +1,7 @@
 #include "ButtonHandler.h"
 #include <Arduino.h>
 
-// --- Initialize static members ---
+//static members
 volatile ButtonHandler::ButtonState ButtonHandler::_currentState = S_IDLE;
 volatile unsigned long ButtonHandler::_doubleClickStartTime = 0;
 volatile ButtonEvent ButtonHandler::_lastEvent = EV_NONE;
@@ -9,7 +9,7 @@ volatile ButtonEvent ButtonHandler::_lastEvent = EV_NONE;
 // Timeout for detecting a triple click after a double click has occurred.
 const int TRIPLE_CLICK_TIMEOUT = 700;
 
-// --- Public Methods ---
+// Public Methods
 
 ButtonHandler::ButtonHandler(int pin) 
   : _button(pin, true, true), _pin(pin) {
@@ -24,7 +24,7 @@ void ButtonHandler::begin() {
 void ButtonHandler::tick() {
   _button.tick();
 
-  // The main loop tick handles the timeout for finalizing a double-click.
+  // The main loop tick handles the timeout for deciding a doubleclick.
   if (_currentState == S_DOUBLE_CLICK_PENDING && (millis() - _doubleClickStartTime > TRIPLE_CLICK_TIMEOUT)) {
     _lastEvent = EV_DOUBLE_CLICK;
     _currentState = S_IDLE;
@@ -32,7 +32,7 @@ void ButtonHandler::tick() {
 }
 
 ButtonEvent ButtonHandler::getEvent() {
-  // This function is polled by the main app. It returns the last event and consumes it.
+  // This function is polled by the main code. It returns the last event and consumes it.
   ButtonEvent event = _lastEvent;
   if (event != EV_NONE) {
     _lastEvent = EV_NONE;
@@ -40,27 +40,27 @@ ButtonEvent ButtonHandler::getEvent() {
   return event;
 }
 
-// --- Static Callback Implementations ---
+
 
 void ButtonHandler::handleSingleClick() {
   if (_currentState == S_DOUBLE_CLICK_PENDING) {
-    // A single click occurred while a double-click was pending, so it's a triple-click.
+    // A single click occurred while a doubleclick was pending, so it's a triple click.
     _lastEvent = EV_TRIPLE_CLICK;
     _currentState = S_IDLE;
   } else {
-    // This is a normal single click.
+    // normal single click.
     _lastEvent = EV_SINGLE_CLICK;
   }
 }
 
 void ButtonHandler::handleDoubleClick() {
-  // A double-click has happened. Start the timer and wait to see if a third click follows.
+  // A doubleclick  happened. Start the timer and wait to see if a third click happens too
   _currentState = S_DOUBLE_CLICK_PENDING;
   _doubleClickStartTime = millis();
 }
 
 void ButtonHandler::handleLongPress() {
   _lastEvent = EV_LONG_PRESS;
-  // Ensure we cancel any pending double-click state.
+  //cancel any pending double click state
   _currentState = S_IDLE;
 }

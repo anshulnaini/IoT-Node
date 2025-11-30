@@ -4,9 +4,9 @@
 #include <OneButton.h>
 
 /**
- * @brief Enum to represent the different button events that the main app can query.
+ * @brief Enum to for dif button states
  * 
- * EV_NONE is returned when no new event has occurred.
+ * EV_NONE is returned when no new events
  */
 enum ButtonEvent {
   EV_NONE,
@@ -17,25 +17,25 @@ enum ButtonEvent {
 };
 
 /**
- * @brief Provides a high-level abstraction for handling complex button events like
+ * @brief abstraction layer for handling complex button events like
  * single, double, triple, and long presses.
  * 
  * HOW TO USE:
  * 1. Create a global instance of this class: 
- *    `ButtonHandler myButton(BUTTON_PIN);`
+ *    ButtonHandler myButton(BUTTON_PIN);
  * 
  * 2. In the main `setup()` function, call the begin method:
- *    `myButton.begin();`
+ *    myButton.begin();
  * 
- * 3. In the main `loop()` function, you MUST call the tick method on every iteration.
+ * 3. In the main `loop()` function, you have to call the tick method on every iteration.
  *    This method must be called frequently and rapidly. Do NOT use `delay()` in your
- *    main loop, as it will prevent the button from being checked correctly.
- *    `myButton.tick();`
+ *    main loop becausen will prevent the button from being checked correctly.
+ *    myButton.tick();
  * 
  * 4. To check for an event, call getEvent(). This will return the last event and
- *    consume it (it will return EV_NONE on subsequent calls until a new event occurs).
- *    `ButtonEvent event = myButton.getEvent();`
- *    `if (event != EV_NONE) { ... process event ... }`
+ *    consume it (it will return EV_NONE after that until a new event occurs).
+ *    ButtonEvent event = myButton.getEvent();
+ *    if (event != EV_NONE) { ... process event ... }
  */
 class ButtonHandler {
 public:
@@ -52,14 +52,14 @@ public:
   void begin();
 
   /**
-   * @brief Ticks the underlying OneButton library and our state machine.
-   * MUST be called in the main loop() on every iteration.
+   * @brief Ticks the  OneButton library and the state machine.
+   * hass to be called in the main loop() on every iteration.
    */
   void tick();
 
   /**
    * @brief Returns the last detected button event.
-   * This is a polling method. It consumes the event, so subsequent calls will
+   * This is a polling method. It consumes the event, so later calls will
    * return EV_NONE until a new event is detected.
    * @return ButtonEvent The event that occurred, or EV_NONE.
    */
@@ -69,15 +69,14 @@ private:
   OneButton _button;
   int _pin;
 
-  // --- State machine members ---
-  // Note: These are static because the C-style callbacks from OneButton can't access instance members.
-  // This works safely under the assumption that we only have one ButtonHandler instance.
+  // State machine
+  // This works but you can only have one ButtonHandler instance
   enum ButtonState { S_IDLE, S_DOUBLE_CLICK_PENDING };
   volatile static ButtonState _currentState;
   volatile static unsigned long _doubleClickStartTime;
   volatile static ButtonEvent _lastEvent;
 
-  // --- Static callbacks that will be attached to the button ---
+  // Static callbacks that will be attached to the button
   static void handleSingleClick();
   static void handleDoubleClick();
   static void handleLongPress();
