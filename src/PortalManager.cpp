@@ -1,7 +1,7 @@
 #include "PortalManager.h"
 #include <WiFi.h>
 
-// --- Embedded HTML/CSS for the configuration page ---
+// config  page
 const char CONFIG_PAGE[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
 <html>
@@ -54,7 +54,7 @@ const char CONFIG_PAGE[] PROGMEM = R"rawliteral(
 </html>
 )rawliteral";
 
-// --- AP and DNS Settings ---
+//  AP Settings 
 const char* AP_SSID = "IoT-Node-Setup";
 const byte DNS_PORT = 53;
 IPAddress apIP(192, 168, 4, 1);
@@ -94,7 +94,7 @@ bool PortalManager::isConfigSaved() {
   return _configSaved;
 }
 
-// --- Private Handler Methods ---
+// handlers
 
 void PortalManager::handleRoot() {
   _server.send(200, "text/html", CONFIG_PAGE);
@@ -123,7 +123,6 @@ void PortalManager::handleSave() {
 }
 
 void PortalManager::handleNotFound() {
-  // Redirect to the root page to ensure captive portal works
   _server.sendHeader("Location", String("http://") + apIP.toString(), true);
   _server.send(302, "text/plain", "");
 }

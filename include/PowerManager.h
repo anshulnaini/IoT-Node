@@ -19,17 +19,17 @@ public:
   PowerManager(int buttonPin, int oledPowerPin, int sensorPowerPin);
 
   /**
-   * @brief Turns power ON for the peripherals (OLED, sensor).
+   * @brief Turns power on for the peripherals (OLED, sensor).
    */
   void peripherals_on();
 
   /**
-   * @brief Turns power OFF for the peripherals (OLED, sensor).
+   * @brief Turns power off for the peripherals (OLED, sensor).
    */
   void peripherals_off();
 
   /**
-   * @brief Configures the wake-up sources and puts the device into deep sleep.
+   * @brief Configures the wakup sources and puts the device into deep sleep.
    * 
    * @param sleepDurationSeconds The number of seconds to sleep before the timer wakes the device.
    */

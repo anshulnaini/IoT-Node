@@ -20,25 +20,36 @@ Pushbutton - Allows for user interaction
 This project is built using the [PlatformIO IDE](https://platformio.org/) and the Arduino framework.
 
 *   **Arduino Framework:** The core framework providing basic functions for ESP32 development.
-*   **`adafruit/Adafruit SH110X`:** Library for controlling the SH1106 I2C OLED display.
-*   **`adafruit/Adafruit AHTX0`:** Library for interfacing with the AHT10 temperature and humidity sensor.
-*   **`mathertel/OneButton`:** Simplifies handling of button presses (single, double, triple, long press) with debouncing.
-*   **`bblanchon/ArduinoJson`:** Used for creating and parsing JSON payloads for API communication.
 *   **`WebServer` & `DNSServer`:** Core Arduino libraries used by the `PortalManager` for creating the captive WiFi setup portal.
 *   **`HTTPClient`:** Arduino library for making HTTP requests to the backend server.
 *   **`Preferences`:** ESP32 library for storing configuration data persistently in Non-Volatile Storage (NVS).
 *   **`WiFi`:** Arduino library for managing WiFi connectivity.
 *   **`esp_sleep.h` (ESP-IDF):** Used by the `PowerManager` for configuring and entering ESP32's deep sleep mode.
+        https://github.com/espressif/arduino-esp32
+
+*   **`adafruit/Adafruit SH110X`:** Library for controlling the SH1106 I2C OLED display.
+        https://github.com/adafruit/Adafruit_SH110x
+
+*   **`adafruit/Adafruit AHTX0`:** Library for interfacing with the AHT10 temperature and humidity sensor.
+        https://github.com/adafruit/Adafruit_AHTX0
+
+*   **`mathertel/OneButton`:** Simplifies handling of button presses (single, double, triple, long press) with debouncing.
+        https://github.com/mathertel/OneButton
+
+*   **`bblanchon/ArduinoJson`:** Used for creating and parsing JSON payloads for API communication.
+        https://github.com/bblanchon/ArduinoJson
 
 
 Problems Faced
 
-Originally I had planned to measure battery percentage to send as part of the telemetry. However as I was making the voltage divider (gives safe voltage to esp32 adc pin) I realized that it would constantly consume power and waste battery which completely defeats the purpose of sleep mode and shutting off peripherals. I decided to put a hold on that feature. 
+Originally I had planned to measure battery percentage to send as part of the telemetry. However as I was making the voltage divider (gives safe voltage to esp32 adc pin) I realized that it would constantly consume power and waste battery which completely defeats the purpose of sleep mode and shutting off peripherals. I decided to put a hold on that feature. Also I had
+an issue with the OneButton library where it for some reason only detected 3+ presses but not 1 or 2 so I had to make a handler
+for my button presses.
 
 
 Similar Embedded Devices
 
-There are commercial products like this that do exist such as Monnit ALTA sensors, TempAlert, and Sensaphone devices but they are expensive, require subscriptions, or use proprietary gateways. The main advantage of my solution is that it is a lot cheaper, which makes it more affordable for small, family owned restaurants.
+There are commercial products like this that do exist such as Monnit ALTA sensors, TempAlert, and Sensaphone devices but they are expensive, require subscriptions, or use proprietary gateways. The main advantage of my solution is that it is a LOT cheaper, which makes it more affordable for small, family owned restaurants.
 
 
 If I Had More Time

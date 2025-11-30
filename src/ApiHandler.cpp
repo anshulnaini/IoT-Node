@@ -17,7 +17,7 @@ bool ApiHandler::registerDeviceIfNeeded() {
 
   Serial.println("Device not registered. Attempting registration...");
 
-  // --- Create the JSON payload ---
+  // Create the JSON payload 
   JsonDocument doc;
   doc["name"] = config.deviceName;
   doc["type"] = config.deviceType;
@@ -26,7 +26,7 @@ bool ApiHandler::registerDeviceIfNeeded() {
   String jsonPayload;
   serializeJson(doc, jsonPayload);
 
-  // --- Perform the HTTP POST request ---
+  //  HTTP POST request for registerning
   HTTPClient http;
   String registrationUrl = String(config.serverUrl) + "/devices";
   http.begin(registrationUrl);
@@ -43,14 +43,14 @@ bool ApiHandler::registerDeviceIfNeeded() {
     Serial.println("Response payload: " + responsePayload);
 
     if (httpCode == HTTP_CODE_CREATED || httpCode == HTTP_CODE_OK) {
-      // --- Parse the response to get the deviceId ---
+      // -get the deviceId from serverc response
       JsonDocument responseDoc;
       deserializeJson(responseDoc, responsePayload);
       const char* receivedId = responseDoc["id"];
 
       if (receivedId) {
         strncpy(config.deviceId, receivedId, sizeof(config.deviceId));
-        _configManager.saveConfig(); // Save the newly acquired deviceId
+        _configManager.saveConfig(); // Save the new deviceId
         Serial.println("Successfully registered! New Device ID: " + String(config.deviceId));
         http.end();
         return true;
@@ -69,24 +69,24 @@ bool ApiHandler::registerDeviceIfNeeded() {
 bool ApiHandler::sendTelemetry(float temperature, float humidity, float battery) {
   const DeviceConfig& config = _configManager.getConfig();
 
-  // We can't send telemetry without a deviceId.
+  // We can't send telemetry without a deviceId
   if (strlen(config.deviceId) == 0) {
     Serial.println("Cannot send telemetry: deviceId is missing.");
     return false;
   }
 
-  // --- Create the JSON payload ---
+  // JSON payload 
   JsonDocument doc;
   doc["deviceId"] = config.deviceId;
   doc["metrics"]["temperature_c"] = temperature;
   doc["metrics"]["humidity_pct"] = humidity;
   doc["metrics"]["battery_pct"] = battery;
-  // The "extras" field from the README is optional, so we'll omit it for now.
+
 
   String jsonPayload;
   serializeJson(doc, jsonPayload);
 
-  // --- Perform the HTTP POST request ---
+  // HTTP POST request for telemetry
   HTTPClient http;
   String ingestUrl = String(config.serverUrl) + "/ingest";
   http.begin(ingestUrl);

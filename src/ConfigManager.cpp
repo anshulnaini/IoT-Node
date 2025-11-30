@@ -1,7 +1,7 @@
 #include "ConfigManager.h"
 #include <Preferences.h>
 
-// The namespace for storing the preferences in NVS.
+// The namespace for storing the preferences in NV mem
 const char* PREFERENCES_NAMESPACE = "iot-node-config";
 
 Preferences preferences;
@@ -12,12 +12,12 @@ ConfigManager::ConfigManager() {
 }
 
 void ConfigManager::begin() {
-  // HAS TO be called once in setup
+  // called once in setup
   // false means we open it in r/w mode.
   preferences.begin(PREFERENCES_NAMESPACE, false);
 }
 
-void ConfigManager::loadConfig() {
+void ConfigManager::loadConfig() { // loads config
   _config.configured = preferences.getBool("configured", false);
 
   if (_config.configured) {
@@ -32,7 +32,7 @@ void ConfigManager::loadConfig() {
   }
 }
 
-void ConfigManager::saveConfig() {
+void ConfigManager::saveConfig() { // saves config
   preferences.putBool("configured", _config.configured);
   preferences.putString("wifiSSID", _config.wifiSSID);
   preferences.putString("wifiPassword", _config.wifiPassword);
@@ -44,7 +44,7 @@ void ConfigManager::saveConfig() {
   preferences.putInt("sleepInterval", _config.sleepIntervalSeconds);
 }
 
-void ConfigManager::clearConfig() {
+void ConfigManager::clearConfig() { // clearns config
   preferences.clear();
   memset(&_config, 0, sizeof(DeviceConfig)); // Reset struct in NV memory
 }

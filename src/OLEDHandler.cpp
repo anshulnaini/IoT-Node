@@ -49,7 +49,7 @@ void OLEDHandler::displayText(const char* text) {
     display.display();
 }
 
-void OLEDHandler::displayInfo(const char* deviceName, const char* deviceId, const char* ipAddress, float temp, float humidity) {
+void OLEDHandler::displayInfo(const char* deviceName, const char* deviceId, const char* serverUrl, float temp, float humidity) {
     display.clearDisplay();
     display.setTextSize(1);
     display.setTextColor(SH110X_WHITE);
@@ -64,8 +64,17 @@ void OLEDHandler::displayInfo(const char* deviceName, const char* deviceId, cons
     id_short[12] = '\0';
     display.println(id_short);
 
-    display.print("IP: ");
-    display.println(ipAddress);
+    display.print("Server: ");
+    // shorten serverUrl if too long
+    char url_short[31]; 
+    if (strlen(serverUrl) > 30) {
+        strncpy(url_short, serverUrl, 27); 
+        strcpy(&url_short[27], "...");
+        url_short[30] = '\0';
+        display.println(url_short);
+    } else {
+        display.println(serverUrl);
+    }
 
     display.setCursor(0, 40);
     display.print("Temp: ");

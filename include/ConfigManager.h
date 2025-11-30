@@ -25,7 +25,7 @@ struct DeviceConfig {
 
 /**
  * @brief Manages saving, loading, and clearing of the device configuration
- *        to/from Non-Volatile Storage (NVS) using the Preferences library.
+ *        to/from Non-Volatile Storage using the Preferences library.
  */
 class ConfigManager {
 public:
@@ -45,10 +45,10 @@ public:
   // Provides direct, readonly access to the loaded configuration.
   const DeviceConfig& getConfig() const;
 
-  // Allows modification of the configuration before saving.
+  // Allows changing  the configuration before saving.
   DeviceConfig& getMutableConfig();
 
-  // A simple check to see if the device has been configured.
+  // check to see if the device has been configured.
   bool isConfigured();
 
 private:

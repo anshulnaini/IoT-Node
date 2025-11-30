@@ -23,11 +23,11 @@ public:
      * 
      * @param deviceName The configured name of the device.
      * @param deviceId The unique ID assigned by the server.
-     * @param ipAddress The current IP address of the device.
+     * @param serverUrl The configured URL of the backend server.
      * @param temp The current temperature in Celsius.
      * @param humidity The current relative humidity.
      */
-    void displayInfo(const char* deviceName, const char* deviceId, const char* ipAddress, float temp, float humidity);
+    void displayInfo(const char* deviceName, const char* deviceId, const char* serverUrl, float temp, float humidity);
 
     // function to clear the display
     void clearDisplay();

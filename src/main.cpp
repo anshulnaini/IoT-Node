@@ -70,6 +70,7 @@ void loop() {
   buttonHandler.tick();
   ButtonEvent event = buttonHandler.getEvent();
 
+  // checks for a factory reset before doing anything
   if (event == EV_LONG_PRESS) {
     Serial.println("\n!!! FACTORY RESET TRIGGERED !!!");
     oled.displayText("FACTORY RESET");
@@ -78,41 +79,42 @@ void loop() {
     ESP.restart();
   }
 
+  // does differnt things based on what state it is in every loop
   switch (currentState) {
-    case STATE_BOOT:
+    case STATE_BOOT: // initial state after power on or reset
       Serial.println("State: BOOT");
       if (configManager.isConfigured()) {
         currentState = STATE_CONNECTING_WIFI;
       }
       else {
-        currentState = STATE_SETUP_START;
+        currentState = STATE_SETUP_START; // start setup if not configured
       }
       break;
 
-    case STATE_INFO_DISPLAY:
+    case STATE_INFO_DISPLAY: // shows device info and sensor readings
       if (stateTimer == 0) {
         Serial.println("State: INFO_DISPLAY");
         const DeviceConfig& config = configManager.getConfig();
         float temp = sensorHandler.readTemperature();
         float humidity = sensorHandler.readHumidity();
-        oled.displayInfo(config.deviceName, config.deviceId, "N/A", temp, humidity);
+        oled.displayInfo(config.deviceName, config.deviceId, config.serverUrl, temp, humidity);
         stateTimer = millis();
       }
 
       // Event handling for this state
-      if (event == EV_SINGLE_CLICK) {
+      if (event == EV_SINGLE_CLICK) { // go back to sleep
         Serial.println("Single-click: Going to sleep.");
         stateTimer = 0;
         currentState = STATE_DEEP_SLEEP;
         break; 
       }
-      if (event == EV_DOUBLE_CLICK) {
+      if (event == EV_DOUBLE_CLICK) { // force telemetry send
         Serial.println("Double-click: Forcing telemetry send.");
         stateTimer = 0;
         currentState = STATE_TELEMETRY_SEND;
         break; 
       }
-      if (event == EV_TRIPLE_CLICK) {
+      if (event == EV_TRIPLE_CLICK) { // enter setup mode
         Serial.println("Triple-click: Entering setup mode.");
         stateTimer = 0;
         currentState = STATE_SETUP_START;
@@ -127,22 +129,22 @@ void loop() {
       }
       break;
 
-    case STATE_SETUP_START:
+    case STATE_SETUP_START: // starts the setup portal
       Serial.println("State: SETUP_START");
       oled.displayText("Setup Mode");
       portalManager.start();
       currentState = STATE_SETUP_RUNNING;
       break;
 
-    case STATE_SETUP_RUNNING:
+    case STATE_SETUP_RUNNING: // runs the setup portal and waits for the config to be saved (user input)
       portalManager.loop();
       if (portalManager.isConfigSaved()) {
-        stateTimer = 0; // Reset timer for next use
+        stateTimer = 0;
         currentState = STATE_SETUP_COMPLETE;
       }
       break;
 
-    case STATE_SETUP_COMPLETE:
+    case STATE_SETUP_COMPLETE: // finalizes setup and restarts the device
        if (stateTimer == 0) {
         Serial.println("State: SETUP_COMPLETE");
         portalManager.stop();
@@ -154,7 +156,7 @@ void loop() {
       }
       break;
 
-    case STATE_CONNECTING_WIFI:
+    case STATE_CONNECTING_WIFI: // connects to wifi
       Serial.println("State: CONNECTING_WIFI");
       if (connectToWiFi()) {
         currentState = STATE_TELEMETRY_SEND;
@@ -166,10 +168,10 @@ void loop() {
       }
       break;
 
-    case STATE_TELEMETRY_SEND:
+    case STATE_TELEMETRY_SEND: // sends telemetry to server
       Serial.println("State: TELEMETRY_SEND");
       oled.displayText("Registering...");
-      if (apiHandler.registerDeviceIfNeeded()) {
+      if (apiHandler.registerDeviceIfNeeded()) { // tries to register if needed
         oled.displayText("Sending...");
         float temp = sensorHandler.readTemperature();
         float humidity = sensorHandler.readHumidity();
@@ -189,14 +191,14 @@ void loop() {
       currentState = STATE_TASK_COMPLETE;
       break;
 
-    case STATE_TASK_COMPLETE:
+    case STATE_TASK_COMPLETE: //goes back to sleep
       if (millis() - stateTimer > 5000) {
         stateTimer = 0;
         currentState = STATE_DEEP_SLEEP;
       }
       break;
 
-    case STATE_DEEP_SLEEP:
+    case STATE_DEEP_SLEEP: // puts the device into deep sleep and shuts down peripherals
       Serial.println("State: DEEP_SLEEP");
       oled.displayText("Sleeping...");
       

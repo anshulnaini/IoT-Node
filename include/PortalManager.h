@@ -26,12 +26,12 @@ public:
   void start();
 
   /**
-   * @brief Processes DNS and Web server requests. Must be called repeatedly in a loop.
+   * @brief Processes DNS and Web server requests. called repeatedly in a loop.
    */
   void loop();
 
   /**
-   * @brief Stops all portal services.
+   * @brief Stops all portal stuff
    */
   void stop();
 
@@ -47,7 +47,7 @@ private:
   DNSServer _dnsServer;
   bool _configSaved;
 
-  // --- Web Server Handlers ---
+  // Web Server Handlers
   void handleRoot();
   void handleSave();
   void handleNotFound();
